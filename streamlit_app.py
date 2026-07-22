@@ -37,7 +37,7 @@ if st.button("Simulate"):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         output_path = f"output_{timestamp}.wav"
 
-        # ✅ Pass selected language
+        # ✅ Pass selected language to avoid ValueError
         tts.tts_to_file(
             text=transcript,
             speaker_wav=sample_path,
