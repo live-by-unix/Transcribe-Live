@@ -4,7 +4,6 @@ import os
 import zipfile
 from datetime import datetime
 from TTS.api import TTS
-import base64
 
 st.set_page_config(page_title="TranscribeLive", layout="centered")
 st.title("🎙️ TranscribeLive")
@@ -13,59 +12,21 @@ st.title("🎙️ TranscribeLive")
 if "history" not in st.session_state:
     st.session_state.history = []
 
-st.subheader("Upload or Record Voice Sample")
+st.subheader("Upload Voice Sample")
 
-# Upload option
+# Upload option only
 voice_sample = st.file_uploader("Upload a 20s clip", type=["wav","m4a"])
-
-# Record option via HTML/JS
-recorder_html = """
-<script>
-let chunks = [];
-let recorder;
-function startRecording() {
-  navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-    recorder = new MediaRecorder(stream);
-    recorder.ondataavailable = e => chunks.push(e.data);
-    recorder.onstop = e => {
-      let blob = new Blob(chunks, { type: 'audio/wav' });
-      let reader = new FileReader();
-      reader.onload = () => {
-        const base64data = reader.result.split(',')[1];
-        const pyMsg = { "audio": base64data };
-        window.parent.postMessage(pyMsg, "*");
-      };
-      reader.readAsDataURL(blob);
-      chunks = [];
-    };
-    recorder.start();
-    setTimeout(() => recorder.stop(), 20000); // auto-stop after 20s
-  });
-}
-</script>
-<button onclick="startRecording()">🎤 Record 20s</button>
-"""
-st.components.v1.html(recorder_html, height=100)
 
 # Transcript input
 transcript = st.text_area("Type your transcript here")
 
-# Handle recorded audio from browser
-recorded_audio = None
-if "audio" in st.session_state:
-    recorded_audio = base64.b64decode(st.session_state.audio)
-
 # Simulate button
 if st.button("Simulate"):
-    if (voice_sample or recorded_audio) and transcript:
-        if voice_sample:
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
-                tmp.write(voice_sample.read())
-                sample_path = tmp.name
-        else:
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
-                tmp.write(recorded_audio)
-                sample_path = tmp.name
+    if voice_sample and transcript:
+        # Save uploaded file temporarily
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+            tmp.write(voice_sample.read())
+            sample_path = tmp.name
 
         # Voice cloning
         tts = TTS(model_name="tts_models/multilingual/multi-dataset/your_tts", progress_bar=False, gpu=False)
