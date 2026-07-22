@@ -13,12 +13,16 @@ if "history" not in st.session_state:
     st.session_state.history = []
 
 st.subheader("Upload Voice Sample")
-
-# Upload option only
 voice_sample = st.file_uploader("Upload a 20s clip", type=["wav","m4a"])
 
 # Transcript input
 transcript = st.text_area("Type your transcript here")
+
+# Language selector
+language = st.selectbox(
+    "Choose language for synthesis",
+    ["en", "es", "fr", "de", "it", "pt", "zh", "ja"]
+)
 
 # Simulate button
 if st.button("Simulate"):
@@ -32,16 +36,24 @@ if st.button("Simulate"):
         tts = TTS(model_name="tts_models/multilingual/multi-dataset/your_tts", progress_bar=False, gpu=False)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         output_path = f"output_{timestamp}.wav"
-        tts.tts_to_file(text=transcript, speaker_wav=sample_path, file_path=output_path)
+
+        # ✅ Pass selected language
+        tts.tts_to_file(
+            text=transcript,
+            speaker_wav=sample_path,
+            file_path=output_path,
+            language=language
+        )
 
         # Save to history
         st.session_state.history.append({
             "transcript": transcript,
             "audio_path": output_path,
-            "timestamp": timestamp
+            "timestamp": timestamp,
+            "language": language
         })
 
-        st.success("Simulation complete!")
+        st.success(f"Simulation complete! Language: {language}")
         st.audio(output_path)
 
         # Export bundle
@@ -50,13 +62,13 @@ if st.button("Simulate"):
             zipf.write(output_path)
             txt_path = f"transcript_{timestamp}.txt"
             with open(txt_path, "w") as f:
-                f.write(transcript)
+                f.write(f"Language: {language}\n\n{transcript}")
             zipf.write(txt_path)
         st.download_button("Download Bundle", data=open(bundle_path, "rb"), file_name=bundle_path)
 
 # History panel
 st.subheader("History")
 for item in st.session_state.history[::-1]:
-    st.markdown(f"**{item['timestamp']}** — Transcript:")
+    st.markdown(f"**{item['timestamp']}** — Language: {item['language']}")
     st.write(item["transcript"])
     st.audio(item["audio_path"])
