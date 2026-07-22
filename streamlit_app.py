@@ -6,8 +6,6 @@ from datetime import datetime
 from TTS.api import TTS
 
 # Initialize session state
-if "theme" not in st.session_state:
-    st.session_state.theme = "light"
 if "history" not in st.session_state:
     st.session_state.history = []
 
@@ -15,27 +13,30 @@ st.set_page_config(page_title="TranscribeLive", layout="centered")
 
 st.title("🎙️ TranscribeLive")
 
-# Theme toggle
-def toggle_theme():
-    st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
-
-st.button("Toggle Theme", on_click=toggle_theme)
-st.write(f"Current theme: {st.session_state.theme}")
-
 # Record or upload audio
 st.subheader("Upload or Record Voice Sample")
+
+# Upload
 voice_sample = st.file_uploader("Upload a 20s clip", type=["wav","m4a"])
+
+# Record (requires st.audio_recorder or custom JS widget)
+recorded_audio = st.audio_recorder("Record your voice (20s)", sample_rate=16000)
 
 # Transcript input
 transcript = st.text_area("Type your transcript here")
 
 # Simulate button
 if st.button("Simulate"):
-    if voice_sample and transcript:
-        # Save uploaded file temporarily
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
-            tmp.write(voice_sample.read())
-            sample_path = tmp.name
+    if (voice_sample or recorded_audio) and transcript:
+        # Save uploaded or recorded file temporarily
+        if voice_sample:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+                tmp.write(voice_sample.read())
+                sample_path = tmp.name
+        else:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+                tmp.write(recorded_audio)
+                sample_path = tmp.name
 
         # Load pretrained voice cloning model
         tts = TTS(model_name="tts_models/multilingual/multi-dataset/your_tts", progress_bar=False, gpu=False)
