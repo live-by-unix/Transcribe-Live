@@ -4,6 +4,7 @@ import os
 import zipfile
 from datetime import datetime
 from TTS.api import TTS
+from st_audiorec import st_audiorec
 
 # Initialize session state
 if "history" not in st.session_state:
@@ -13,14 +14,11 @@ st.set_page_config(page_title="TranscribeLive", layout="centered")
 
 st.title("🎙️ TranscribeLive")
 
-# Record or upload audio
+# Upload or record audio
 st.subheader("Upload or Record Voice Sample")
 
-# Upload
 voice_sample = st.file_uploader("Upload a 20s clip", type=["wav","m4a"])
-
-# Record (requires st.audio_recorder or custom JS widget)
-recorded_audio = st.audio_recorder("Record your voice (20s)", sample_rate=16000)
+recorded_audio = st_audiorec()
 
 # Transcript input
 transcript = st.text_area("Type your transcript here")
